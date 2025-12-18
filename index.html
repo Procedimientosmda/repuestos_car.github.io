@@ -1,0 +1,866 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Auto Partes Premium</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+  /* ====== Animaciones suaves / look pro ====== */
+  .card { transition: .25s ease; border: 1px solid rgba(148,163,184,.45); }
+  .card:hover { transform: translateY(-6px); box-shadow: 0 25px 60px rgba(0,0,0,.18); }
+
+  .floating{
+    position: fixed; right: 18px; z-index: 60;
+    width: 58px; height: 58px; border-radius: 9999px;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow: 0 12px 34px rgba(0,0,0,.35);
+    transition: .25s ease;
+  }
+  .floating:hover{ transform: scale(1.08); }
+
+  /* ====== Chatbox ====== */
+  #chatOverlay{
+    position: fixed; inset: 0;
+    background: rgba(2,6,23,.55);
+    display: none;
+    z-index: 70;
+  }
+  #chatOverlay.open{ display:block; }
+  #chatBox{
+    position: fixed; right: 18px; bottom: 96px;
+    width: 380px; max-width: calc(100% - 24px);
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 30px 90px rgba(0,0,0,.45);
+    overflow: hidden;
+    display: none;
+    z-index: 80;
+  }
+  #chatBox.open{ display:flex; flex-direction: column; }
+  #chatContent{ max-height: 320px; overflow:auto; }
+
+  /* ====== Selects estilo oscuro en sección buscador ====== */
+  .select-dark{
+    appearance:none;
+    background-repeat:no-repeat;
+    background-position: right 14px center;
+    background-size: 18px;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23e2e8f0'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+  }
+
+  /* ====== Pagination ====== */
+  .pagination button{
+    border: 1px solid rgba(148,163,184,.5);
+    border-radius: 10px;
+    padding: .45rem .8rem;
+    background: #fff;
+    transition: .15s ease;
+  }
+  .pagination button:hover{ background:#eef2ff; }
+  .pagination button.active{
+    background:#2563eb; color:#fff; border-color:#2563eb;
+  }
+
+  /* ====== Responsive chat ====== */
+  @media (max-width: 768px){
+    #chatBox{ right: 12px; left: 12px; width: auto; bottom: 86px; }
+    .floating{ right: 12px; }
+  }
+</style>
+</head>
+
+<body class="bg-slate-50 text-slate-900">
+
+<!-- ================================================= -->
+<!-- HERO -->
+<!-- ================================================= -->
+<header class="bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 text-white">
+  <div class="max-w-7xl mx-auto px-6 py-16 md:py-20 text-center">
+    <div class="flex justify-center mb-5">
+      <!-- Icono auto -->
+      <svg class="w-16 h-16 opacity-95" viewBox="0 0 24 24" fill="none">
+        <path d="M3 12l2-6h14l2 6v8a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1v-1H6v1a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-8Z" stroke="white" stroke-width="1.6" />
+        <path d="M5 11h14" stroke="white" stroke-width="1.6" />
+        <circle cx="7" cy="15" r="1.4" fill="white" />
+        <circle cx="17" cy="15" r="1.4" fill="white" />
+      </svg>
+    </div>
+    <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight">Auto Partes Premium</h1>
+    <p class="text-blue-200 mt-4 text-lg md:text-2xl">Repuestos confiables · Stock real · Atención inmediata</p>
+
+    <div class="flex flex-wrap gap-3 justify-center mt-8">
+      <a id="headerWhatsApp" href="https://wa.me/56900000000" target="_blank"
+         class="inline-flex items-center gap-3 bg-green-500 hover:bg-green-600 px-6 py-3 rounded-full font-bold shadow-lg transition">
+        <!-- WhatsApp ORIGINAL (SVG estilo oficial) -->
+        <svg class="w-6 h-6" viewBox="0 0 32 32" fill="white" aria-hidden="true">
+          <path d="M19.11 17.43c-.26-.13-1.54-.76-1.78-.85-.24-.09-.41-.13-.59.13-.17.26-.68.85-.83 1.02-.15.17-.3.19-.56.06-.26-.13-1.09-.4-2.08-1.27-.77-.69-1.29-1.53-1.44-1.79-.15-.26-.02-.4.11-.53.12-.12.26-.3.39-.45.13-.15.17-.26.26-.43.09-.17.04-.32-.02-.45-.06-.13-.59-1.42-.81-1.94-.21-.51-.43-.44-.59-.45l-.5-.01c-.17 0-.45.06-.69.32-.24.26-.9.89-.9 2.17 0 1.28.92 2.52 1.06 2.69.13.17 1.83 2.8 4.44 3.92.62.27 1.1.43 1.48.55.62.2 1.19.17 1.64.1.5-.07 1.54-.63 1.76-1.24.22-.61.22-1.13.15-1.24-.06-.11-.24-.17-.5-.3Z"/>
+          <path d="M16.02 2.67c-7.3 0-13.23 5.93-13.23 13.23 0 2.3.6 4.55 1.74 6.53L2.67 29.33l7.08-1.86c1.9 1.04 4.04 1.59 6.27 1.59h.01c7.3 0 13.23-5.93 13.23-13.23 0-3.55-1.38-6.88-3.9-9.4-2.52-2.52-5.86-3.9-9.4-3.9Zm0 23.85h-.01c-2 0-3.96-.54-5.66-1.55l-.41-.24-4.2 1.1 1.12-4.09-.26-.42a10.85 10.85 0 0 1-1.68-5.78c0-5.99 4.87-10.86 10.86-10.86 2.9 0 5.63 1.13 7.69 3.18a10.8 10.8 0 0 1 3.18 7.69c0 5.99-4.87 10.86-10.86 10.86Z"/>
+        </svg>
+        WhatsApp
+      </a>
+
+      <a id="headerInstagram" href="https://instagram.com" target="_blank"
+         class="inline-flex items-center gap-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 px-6 py-3 rounded-full font-bold shadow-lg transition">
+        <!-- Instagram ORIGINAL (SVG estilo oficial) -->
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+          <path d="M7 2C4.24 2 2 4.24 2 7v10c0 2.76 2.24 5 5 5h10c2.76 0 5-2.24 5-5V7c0-2.76-2.24-5-5-5H7Zm10 2a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h10Z"/>
+          <path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z"/>
+          <path d="M17.5 6.3a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Z"/>
+        </svg>
+        Instagram
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- ================================================= -->
+<!-- QUIÉNES SOMOS + STATS + BENEFICIOS (como imagen) -->
+<!-- ================================================= -->
+<section class="bg-white">
+  <div class="max-w-7xl mx-auto px-6 py-16">
+    <h2 class="text-4xl font-extrabold text-center tracking-tight">QUIÉNES SOMOS</h2>
+
+    <div class="mt-10 grid lg:grid-cols-2 gap-10 items-start">
+      <!-- Texto + stats -->
+      <div>
+        <p class="text-slate-700 leading-relaxed text-lg">
+          Somos una empresa con más de 15 años de experiencia en el mercado de autopartes.
+          Nos especializamos en la venta de piezas de calidad para todo tipo de vehículos.
+          Nuestro compromiso es ofrecer productos confiables a precios competitivos.
+        </p>
+
+        <div class="mt-10 grid grid-cols-3 gap-4">
+          <div class="bg-blue-50 rounded-2xl p-6 text-center">
+            <div class="text-4xl font-extrabold text-blue-600">15+</div>
+            <div class="text-sm font-semibold text-slate-600 mt-1">Años</div>
+          </div>
+          <div class="bg-green-50 rounded-2xl p-6 text-center">
+            <div class="text-4xl font-extrabold text-green-600">5000+</div>
+            <div class="text-sm font-semibold text-slate-600 mt-1">Piezas</div>
+          </div>
+          <div class="bg-purple-50 rounded-2xl p-6 text-center">
+            <div class="text-4xl font-extrabold text-purple-600">100%</div>
+            <div class="text-sm font-semibold text-slate-600 mt-1">Garantía</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tarjetas -->
+      <div class="grid sm:grid-cols-2 gap-5">
+        <div class="rounded-2xl p-7 text-white bg-gradient-to-br from-blue-500 to-blue-700">
+          <div class="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center mb-4">
+            <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none">
+              <path d="M7 3v4M17 3v4M4 9h16M6 13h4M6 17h6" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              <path d="M5 5h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Z" stroke="white" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="text-xl font-bold">Atención 6 días</div>
+          <div class="text-blue-100 mt-1">Lun–Sáb 9:00–19:00</div>
+        </div>
+
+        <div class="rounded-2xl p-7 text-white bg-gradient-to-br from-green-500 to-green-700">
+          <div class="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center mb-4">
+            <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none">
+              <path d="M20 6L9 17l-5-5" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="text-xl font-bold">Garantía</div>
+          <div class="text-green-100 mt-1">En todas las piezas</div>
+        </div>
+
+        <div class="rounded-2xl p-7 text-white bg-gradient-to-br from-purple-500 to-purple-700">
+          <div class="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center mb-4">
+            <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2l8 4v6c0 5-3.4 9.6-8 10-4.6-.4-8-5-8-10V6l8-4Z" stroke="white" stroke-width="2"/>
+              <path d="M12 11v6" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="text-xl font-bold">Calidad</div>
+          <div class="text-purple-100 mt-1">Piezas verificadas</div>
+        </div>
+
+        <div class="rounded-2xl p-7 text-white bg-gradient-to-br from-orange-500 to-orange-700">
+          <div class="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center mb-4">
+            <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none">
+              <path d="M12 8v5l3 2" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 22a10 10 0 1 0-10-10 10 10 0 0 0 10 10Z" stroke="white" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="text-xl font-bold">Respuesta</div>
+          <div class="text-orange-100 mt-1">Inmediata</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================= -->
+<!-- BUSCADOR DE PIEZAS (oscuro, como imagen) -->
+<!-- ================================================= -->
+<section class="bg-gradient-to-b from-slate-900 to-slate-800 text-white py-16">
+  <div class="max-w-7xl mx-auto px-6">
+    <h2 class="text-3xl md:text-4xl font-extrabold text-center">🔎 BUSCADOR DE PIEZAS</h2>
+
+    <div class="mt-10 bg-white/10 backdrop-blur-xl rounded-2xl p-6 md:p-8 shadow-2xl">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+          <label class="text-sm font-bold text-slate-200">1️⃣ Año</label>
+          <select id="year" class="select-dark mt-2 w-full px-4 py-3 bg-slate-700 text-white border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+            <option value="">Seleccionar Año</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="text-sm font-bold text-slate-200">2️⃣ Marca</label>
+          <select id="brand" class="select-dark mt-2 w-full px-4 py-3 bg-slate-700 text-white border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" disabled>
+            <option value="">Seleccionar Marca</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="text-sm font-bold text-slate-200">3️⃣ Modelo</label>
+          <select id="model" class="select-dark mt-2 w-full px-4 py-3 bg-slate-700 text-white border border-white/10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400" disabled>
+            <option value="">Seleccionar Modelo</option>
+          </select>
+        </div>
+
+        <div class="flex items-end">
+          <div class="w-full flex gap-2">
+            <button id="searchBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-extrabold shadow-lg">
+              🔍 Buscar
+            </button>
+            <button id="resetBtn" class="flex-1 bg-white/15 hover:bg-white/20 text-white py-3 rounded-lg font-extrabold">
+              Limpiar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <p class="text-center text-slate-300 text-sm mt-5">
+        Tip: después de buscar, el sistema vuelve al inventario completo automáticamente en <b>60 segundos</b>.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================= -->
+<!-- INVENTARIO + FILTRO LATERAL DERECHO + PAGINACIÓN -->
+<!-- ================================================= -->
+<section class="bg-white py-16">
+  <div class="max-w-7xl mx-auto px-6">
+    <h2 class="text-4xl font-extrabold text-center">NUESTRO INVENTARIO</h2>
+
+    <div class="mt-10 grid lg:grid-cols-[1fr_320px] gap-10">
+      <!-- Grid Inventario -->
+      <div>
+        <div id="grid" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3"></div>
+
+        <div id="empty" class="hidden mt-12 text-center text-slate-500 bg-slate-50 p-10 rounded-2xl border">
+          No hay resultados para los filtros seleccionados.
+        </div>
+
+        <!-- Paginación -->
+        <div class="pagination flex flex-wrap items-center justify-center gap-2 mt-12" id="pagination"></div>
+      </div>
+
+      <!-- Sidebar filtros PRO -->
+      <aside class="bg-slate-50 rounded-2xl border p-6 h-fit lg:sticky lg:top-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-extrabold">Filtrar inventario</h3>
+          <button id="clearSideFilters" class="text-sm font-bold text-blue-700 hover:underline">
+            Limpiar
+          </button>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="text-sm font-semibold text-slate-700">Categoría</label>
+            <select id="fCategory" class="mt-2 w-full p-3 border rounded-lg bg-white">
+              <option value="">Todas</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="text-sm font-semibold text-slate-700">Año</label>
+            <select id="fYear" class="mt-2 w-full p-3 border rounded-lg bg-white">
+              <option value="">Todos</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="text-sm font-semibold text-slate-700">Marca</label>
+            <select id="fBrand" class="mt-2 w-full p-3 border rounded-lg bg-white">
+              <option value="">Todas</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="text-sm font-semibold text-slate-700">Modelo</label>
+            <select id="fModel" class="mt-2 w-full p-3 border rounded-lg bg-white">
+              <option value="">Todos</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mt-6 bg-white rounded-xl border p-4">
+          <div class="text-sm text-slate-600">Resultados</div>
+          <div class="text-2xl font-extrabold text-slate-900" id="resultCount">0</div>
+          <div class="text-xs text-slate-500 mt-1">Se actualiza con filtros y búsqueda.</div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================= -->
+<!-- FOOTER (como imagen) -->
+<!-- ================================================= -->
+<footer class="bg-gradient-to-b from-slate-900 to-slate-950 text-slate-300">
+  <div class="max-w-7xl mx-auto px-6 py-14">
+    <div class="grid md:grid-cols-3 gap-10">
+      <div>
+        <div class="text-white font-extrabold text-lg">Auto Partes Premium</div>
+        <p class="text-slate-400 mt-2">Tu mejor opción en autopartes de calidad</p>
+      </div>
+      <div>
+        <div class="text-white font-extrabold text-lg">Horarios</div>
+        <p class="text-slate-400 mt-2">Lunes a Sábado<br>9:00 AM - 7:00 PM</p>
+      </div>
+      <div>
+        <div class="text-white font-extrabold text-lg">Contacto</div>
+        <p class="text-slate-400 mt-2">WhatsApp e Instagram<br>Respuesta inmediata</p>
+      </div>
+    </div>
+
+    <div class="mt-10 border-t border-white/10 pt-8 text-center text-slate-400">
+      © 2025 Auto Partes Premium. Todos los derechos reservados.
+    </div>
+  </div>
+</footer>
+
+<!-- ================================================= -->
+<!-- CHATBOX (con detalle + CTA WhatsApp) -->
+<!-- ================================================= -->
+<div id="chatOverlay" onclick="closeChat()"></div>
+
+<div id="chatBox" class="">
+  <div class="bg-gradient-to-r from-blue-700 to-blue-600 text-white p-4 flex items-center gap-3">
+    <div class="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
+        <path d="M4 4h16v12H7l-3 3V4Z" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+        <path d="M8 9h8M8 12h6" stroke="white" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="flex-1">
+      <div class="font-extrabold leading-tight">Asistente Virtual</div>
+      <div class="text-blue-100 text-xs">Detalle de la pieza seleccionada</div>
+    </div>
+    <button class="hover:bg-white/15 rounded-lg px-2 py-1" onclick="closeChat()">✕</button>
+  </div>
+
+  <div id="chatContent" class="p-4 text-sm text-slate-700 space-y-3"></div>
+
+  <a id="chatWhatsAppCta" href="#" target="_blank"
+     class="w-full bg-green-500 hover:bg-green-600 text-white font-extrabold text-center py-3">
+    💬 Contactar por WhatsApp por esta pieza
+  </a>
+</div>
+
+<!-- ================================================= -->
+<!-- FLOATING BUTTONS con íconos originales -->
+<!-- ================================================= -->
+<a id="floatingWhatsApp" href="https://wa.me/56900000000" target="_blank"
+   class="floating bottom-40 bg-[#25D366]" title="WhatsApp">
+  <!-- WhatsApp icon -->
+  <svg class="w-7 h-7" viewBox="0 0 32 32" fill="white" aria-hidden="true">
+    <path d="M19.11 17.43c-.26-.13-1.54-.76-1.78-.85-.24-.09-.41-.13-.59.13-.17.26-.68.85-.83 1.02-.15.17-.3.19-.56.06-.26-.13-1.09-.4-2.08-1.27-.77-.69-1.29-1.53-1.44-1.79-.15-.26-.02-.4.11-.53.12-.12.26-.3.39-.45.13-.15.17-.26.26-.43.09-.17.04-.32-.02-.45-.06-.13-.59-1.42-.81-1.94-.21-.51-.43-.44-.59-.45l-.5-.01c-.17 0-.45.06-.69.32-.24.26-.9.89-.9 2.17 0 1.28.92 2.52 1.06 2.69.13.17 1.83 2.8 4.44 3.92.62.27 1.1.43 1.48.55.62.2 1.19.17 1.64.1.5-.07 1.54-.63 1.76-1.24.22-.61.22-1.13.15-1.24-.06-.11-.24-.17-.5-.3Z"/>
+    <path d="M16.02 2.67c-7.3 0-13.23 5.93-13.23 13.23 0 2.3.6 4.55 1.74 6.53L2.67 29.33l7.08-1.86c1.9 1.04 4.04 1.59 6.27 1.59h.01c7.3 0 13.23-5.93 13.23-13.23 0-3.55-1.38-6.88-3.9-9.4-2.52-2.52-5.86-3.9-9.4-3.9Zm0 23.85h-.01c-2 0-3.96-.54-5.66-1.55l-.41-.24-4.2 1.1 1.12-4.09-.26-.42a10.85 10.85 0 0 1-1.68-5.78c0-5.99 4.87-10.86 10.86-10.86 2.9 0 5.63 1.13 7.69 3.18a10.8 10.8 0 0 1 3.18 7.69c0 5.99-4.87 10.86-10.86 10.86Z"/>
+  </svg>
+</a>
+
+<a id="floatingInstagram" href="https://instagram.com" target="_blank"
+   class="floating bottom-24 bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600" title="Instagram">
+  <!-- Instagram icon -->
+  <svg class="w-7 h-7" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+    <path d="M7 2C4.24 2 2 4.24 2 7v10c0 2.76 2.24 5 5 5h10c2.76 0 5-2.24 5-5V7c0-2.76-2.24-5-5-5H7Zm10 2a3 3 0 0 1 3 3v10a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V7a3 3 0 0 1 3-3h10Z"/>
+    <path d="M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z"/>
+    <path d="M17.5 6.3a1.2 1.2 0 1 0 0 2.4 1.2 1.2 0 0 0 0-2.4Z"/>
+  </svg>
+</a>
+
+<button class="floating bottom-8 bg-blue-600 text-white" onclick="openChatDefault()" title="Chat">
+  <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none">
+    <path d="M4 4h16v12H7l-3 3V4Z" stroke="white" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M8 9h8M8 12h6" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  </svg>
+</button>
+
+<!-- ================================================= -->
+<!-- SCRIPT (mantiene todo + filtros sidebar + paginación) -->
+<!-- ================================================= -->
+<script>
+/* ================== CONFIG ================== */
+const WHATSAPP_NUMBER = "56900000000"; // cambia acá
+const INSTAGRAM_URL = "https://instagram.com"; // cambia acá
+
+/* ================== SHEET ================== */
+const CSV_URL =
+"https://docs.google.com/spreadsheets/d/e/2PACX-1vRwm6U6wrn8Tb995yEYEj5Itq0S1Yf98nMQJfQImUGDXptg0hc0lJFVAW1wa-jj-KZ5O9NaUxfi4NdN/pub?gid=0&single=true&output=csv";
+
+/* ================== STATE ================== */
+let data = [];
+let filtered = [];
+let resetTimer = null;
+
+const PAGE_SIZE = 9;
+let currentPage = 1;
+
+/* ================== CSV PARSE (simple) ================== */
+const parse = (t) => {
+  const lines = t.trim().split(/\r?\n/);
+  const head = lines.shift().split(",").map(s => s.trim());
+  return lines.map(line => {
+    const o = {};
+    const parts = line.split(",");
+    head.forEach((h,i)=> o[h] = (parts[i] ?? "").trim());
+    return o;
+  });
+};
+
+/* ================== LOAD SHEET ================== */
+async function load(){
+  const r = await fetch(CSV_URL, { cache: "no-store" });
+  data = parse(await r.text()).map(p => ({
+    part_name: p.part_name || p.name || "",
+    year: p.year || "",
+    brand: p.brand || "",
+    model: p.model || "",
+    condition: p.condition || "Usado",
+    stock_quantity: p.stock_quantity || "0",
+    price: p.price || "0",
+    category: p.category || "General"
+  }));
+
+  // Mantiene inventario completo por defecto
+  filtered = data.slice();
+  currentPage = 1;
+
+  fillYearSelect();
+  buildSidebarFilters();
+  applySidebarFilters(); // para refrescar combos, contador y grilla
+
+  // Links header/floating
+  document.getElementById("headerWhatsApp").href = `https://wa.me/${WHATSAPP_NUMBER}`;
+  document.getElementById("floatingWhatsApp").href = `https://wa.me/${WHATSAPP_NUMBER}`;
+  document.getElementById("headerInstagram").href = INSTAGRAM_URL;
+  document.getElementById("floatingInstagram").href = INSTAGRAM_URL;
+}
+
+/* ================== BUSCADOR PRINCIPAL (Año→Marca→Modelo) ================== */
+function fillYearSelect(){
+  const yearSel = document.getElementById("year");
+  yearSel.innerHTML = `<option value="">Seleccionar Año</option>`;
+  for(let y=2025; y>=1990; y--) yearSel.innerHTML += `<option value="${y}">${y}</option>`;
+
+  // Reset combos dependientes
+  const brandSel = document.getElementById("brand");
+  const modelSel = document.getElementById("model");
+  brandSel.innerHTML = `<option value="">Seleccionar Marca</option>`;
+  modelSel.innerHTML = `<option value="">Seleccionar Modelo</option>`;
+  brandSel.disabled = true;
+  modelSel.disabled = true;
+}
+
+document.getElementById("year").addEventListener("change", function(){
+  const brandSel = document.getElementById("brand");
+  const modelSel = document.getElementById("model");
+
+  brandSel.innerHTML = `<option value="">Seleccionar Marca</option>`;
+  modelSel.innerHTML = `<option value="">Seleccionar Modelo</option>`;
+  modelSel.disabled = true;
+
+  if(!this.value){ brandSel.disabled = true; return; }
+
+  brandSel.disabled = false;
+
+  const brands = [...new Set(data.filter(p => p.year === this.value).map(p => p.brand))].sort();
+  brands.forEach(b => brandSel.innerHTML += `<option value="${b}">${b}</option>`);
+});
+
+document.getElementById("brand").addEventListener("change", function(){
+  const modelSel = document.getElementById("model");
+  modelSel.innerHTML = `<option value="">Seleccionar Modelo</option>`;
+
+  const yearVal = document.getElementById("year").value;
+  if(!this.value){ modelSel.disabled = true; return; }
+
+  modelSel.disabled = false;
+  const models = [...new Set(
+    data.filter(p => p.year === yearVal && p.brand === this.value).map(p => p.model)
+  )].sort();
+  models.forEach(m => modelSel.innerHTML += `<option value="${m}">${m}</option>`);
+});
+
+/* Botón BUSCAR (mantiene tu lógica + reseteo 60s) */
+document.getElementById("searchBtn").addEventListener("click", function(){
+  const yearVal = document.getElementById("year").value;
+  const brandVal = document.getElementById("brand").value;
+  const modelVal = document.getElementById("model").value;
+
+  // Filtra por buscador principal
+  filtered = data.filter(p =>
+    (!yearVal || p.year === yearVal) &&
+    (!brandVal || p.brand === brandVal) &&
+    (!modelVal || p.model === modelVal)
+  );
+
+  // Refresca sidebar opciones (se ajustan al universo filtrado)
+  currentPage = 1;
+  syncSidebarFromFilteredUniverse();
+  render();
+
+  clearTimeout(resetTimer);
+  resetTimer = setTimeout(() => {
+    resetSearch(); // vuelve al inicio a los 60s
+  }, 60000);
+});
+
+/* Botón LIMPIAR (mantiene tu función) */
+document.getElementById("resetBtn").addEventListener("click", resetSearch);
+
+function resetSearch(){
+  // Reset principal
+  document.getElementById("year").selectedIndex = 0;
+  const brandSel = document.getElementById("brand");
+  const modelSel = document.getElementById("model");
+  brandSel.innerHTML = `<option value="">Seleccionar Marca</option>`;
+  modelSel.innerHTML = `<option value="">Seleccionar Modelo</option>`;
+  brandSel.disabled = true;
+  modelSel.disabled = true;
+
+  // Reset sidebar
+  document.getElementById("fCategory").value = "";
+  document.getElementById("fYear").value = "";
+  document.getElementById("fBrand").value = "";
+  document.getElementById("fModel").value = "";
+
+  // Universo completo
+  filtered = data.slice();
+  currentPage = 1;
+
+  buildSidebarFilters();
+  render();
+}
+
+
+
+
+/* ================== SIDEBAR FILTROS PRO ================== */
+function buildSidebarFilters(){
+  const fCategory = document.getElementById("fCategory");
+  const fYear = document.getElementById("fYear");
+  const fBrand = document.getElementById("fBrand");
+  const fModel = document.getElementById("fModel");
+
+  // Usa todo el universo data para combos
+  const cats = [...new Set(data.map(p=>p.category))].filter(Boolean).sort();
+  const years = [...new Set(data.map(p=>p.year))].filter(Boolean).sort((a,b)=>Number(b)-Number(a));
+  const brands= [...new Set(data.map(p=>p.brand))].filter(Boolean).sort();
+  const models= [...new Set(data.map(p=>p.model))].filter(Boolean).sort();
+
+  fCategory.innerHTML = `<option value="">Todas</option>` + cats.map(c=>`<option value="${c}">${c}</option>`).join("");
+  fYear.innerHTML = `<option value="">Todos</option>` + years.map(y=>`<option value="${y}">${y}</option>`).join("");
+  fBrand.innerHTML = `<option value="">Todas</option>` + brands.map(b=>`<option value="${b}">${b}</option>`).join("");
+  fModel.innerHTML = `<option value="">Todos</option>` + models.map(m=>`<option value="${m}">${m}</option>`).join("");
+
+  document.getElementById("resultCount").textContent = filtered.length;
+}
+
+/* Ajusta sidebar según universo filtrado (post-búsqueda principal) */
+function syncSidebarFromFilteredUniverse(){
+  const fCategory = document.getElementById("fCategory");
+  const fYear = document.getElementById("fYear");
+  const fBrand = document.getElementById("fBrand");
+  const fModel = document.getElementById("fModel");
+
+  // Mantener selección actual si existe; si ya no existe, limpiar
+  const selCat = fCategory.value;
+  const selYear = fYear.value;
+  const selBrand= fBrand.value;
+  const selModel= fModel.value;
+
+  const cats = [...new Set(filtered.map(p=>p.category))].filter(Boolean).sort();
+  const years = [...new Set(filtered.map(p=>p.year))].filter(Boolean).sort((a,b)=>Number(b)-Number(a));
+  const brands= [...new Set(filtered.map(p=>p.brand))].filter(Boolean).sort();
+  const models= [...new Set(filtered.map(p=>p.model))].filter(Boolean).sort();
+
+  fCategory.innerHTML = `<option value="">Todas</option>` + cats.map(c=>`<option value="${c}">${c}</option>`).join("");
+  fYear.innerHTML = `<option value="">Todos</option>` + years.map(y=>`<option value="${y}">${y}</option>`).join("");
+  fBrand.innerHTML = `<option value="">Todas</option>` + brands.map(b=>`<option value="${b}">${b}</option>`).join("");
+  fModel.innerHTML = `<option value="">Todos</option>` + models.map(m=>`<option value="${m}">${m}</option>`).join("");
+
+  if(selCat && cats.includes(selCat)) fCategory.value = selCat; else fCategory.value = "";
+  if(selYear && years.includes(selYear)) fYear.value = selYear; else fYear.value = "";
+  if(selBrand && brands.includes(selBrand)) fBrand.value = selBrand; else fBrand.value = "";
+  if(selModel && models.includes(selModel)) fModel.value = selModel; else fModel.value = "";
+
+  // Aplica de nuevo filtros de sidebar sobre el universo ya filtrado
+  applySidebarFilters();
+}
+
+function applySidebarFilters(){
+  const cat = document.getElementById("fCategory").value;
+  const y = document.getElementById("fYear").value;
+  const b = document.getElementById("fBrand").value;
+  const m = document.getElementById("fModel").value;
+
+  // Base: si vienes de búsqueda principal, filtered ya es subconjunto.
+  // Para mantener coherencia, aplicamos sobre "filteredBase" que es:
+  // - si el usuario hizo una búsqueda principal: el "filtered" actual ya contiene ese universo.
+  // - si no: es el universo completo.
+  // Para evitar "doble filtrado acumulativo", usamos una base "baseUniverse":
+  const baseUniverse = getBaseUniverseForSidebar();
+
+  filtered = baseUniverse.filter(p =>
+    (!cat || p.category === cat) &&
+    (!y || p.year === y) &&
+    (!b || p.brand === b) &&
+    (!m || p.model === m)
+  );
+
+  currentPage = 1;
+  document.getElementById("resultCount").textContent = filtered.length;
+  render();
+}
+
+// Determina universo base: si hay búsqueda principal activa => por selects principales.
+function getBaseUniverseForSidebar(){
+  const yearVal = document.getElementById("year").value;
+  const brandVal = document.getElementById("brand").value;
+  const modelVal = document.getElementById("model").value;
+
+  // Si el buscador principal está vacío, base = data
+  if(!yearVal && !brandVal && !modelVal) return data;
+
+  // Si hay algo seleccionado arriba, base = filtro principal
+  return data.filter(p =>
+    (!yearVal || p.year === yearVal) &&
+    (!brandVal || p.brand === brandVal) &&
+    (!modelVal || p.model === modelVal)
+  );
+}
+
+["fCategory","fYear","fBrand","fModel"].forEach(id=>{
+  document.getElementById(id).addEventListener("change", applySidebarFilters);
+});
+
+document.getElementById("clearSideFilters").addEventListener("click", ()=>{
+  document.getElementById("fCategory").value = "";
+  document.getElementById("fYear").value = "";
+  document.getElementById("fBrand").value = "";
+  document.getElementById("fModel").value = "";
+  applySidebarFilters();
+});
+
+/* ================== RENDER + PAGINACIÓN ================== */
+function render(){
+  const grid = document.getElementById("grid");
+  const empty = document.getElementById("empty");
+  const pagination = document.getElementById("pagination");
+
+  grid.innerHTML = "";
+
+  if(!filtered.length){
+    empty.classList.remove("hidden");
+    pagination.innerHTML = "";
+    return;
+  }
+  empty.classList.add("hidden");
+
+  // Paginación
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  currentPage = Math.min(Math.max(1, currentPage), totalPages);
+
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageItems = filtered.slice(start, start + PAGE_SIZE);
+
+  // Cards
+  grid.innerHTML = pageItems.map(p=>{
+    const condClass = (p.condition || "").toLowerCase() === "nuevo"
+      ? "bg-green-100 text-green-700"
+      : "bg-yellow-100 text-yellow-700";
+
+    return `
+      <article class="card bg-white rounded-2xl p-6 shadow cursor-pointer"
+  data-name="${escapeHtml(p.part_name)}"
+  data-year="${escapeHtml(p.year)}"
+  data-brand="${escapeHtml(p.brand)}"
+  data-model="${escapeHtml(p.model)}"
+  data-cond="${escapeHtml(p.condition)}"
+  data-stock="${escapeHtml(p.stock_quantity)}"
+  data-price="${escapeHtml(p.price)}">
+
+        <div class="flex items-center justify-between gap-3">
+          <span class="text-xs font-extrabold px-3 py-1 rounded-full ${condClass}">
+            ${escapeHtml(p.condition)}
+          </span>
+          <span class="text-xs font-semibold text-slate-500">
+            ${escapeHtml(p.category || "General")}
+          </span>
+        </div>
+
+        <h3 class="text-xl font-extrabold mt-4 text-slate-900">${escapeHtml(p.part_name)}</h3>
+
+        <p class="text-sm text-slate-600 mt-2">
+          🚗 ${escapeHtml(p.year)} · ${escapeHtml(p.brand)} · ${escapeHtml(p.model)}
+        </p>
+
+        <div class="mt-4 flex items-center justify-between">
+          <p class="text-sm text-slate-700">📦 Stock: <b>${escapeHtml(p.stock_quantity)}</b></p>
+          <p class="text-2xl font-extrabold text-blue-700">$${Number(p.price||0).toLocaleString()}</p>
+        </div>
+
+        <div class="mt-4 text-xs text-slate-500">
+          Click para ver detalle y cotizar.
+        </div>
+      </article>
+    `;
+  }).join("");
+
+  // Render paginación
+  pagination.innerHTML = "";
+  if(totalPages <= 1) return;
+
+  const btn = (label, onClick, active=false, disabled=false) => `
+    <button ${disabled?'disabled':''}
+      class="${active?'active':''} ${disabled?'opacity-50 cursor-not-allowed':''}"
+      onclick="${onClick}">
+      ${label}
+    </button>`;
+
+  // Prev
+  pagination.innerHTML += btn("«", "goPage(currentPage-1)", false, currentPage===1);
+
+  // Números con recorte
+  const maxNumbers = 7;
+  let startPage = Math.max(1, currentPage - Math.floor(maxNumbers/2));
+  let endPage = Math.min(totalPages, startPage + maxNumbers - 1);
+  startPage = Math.max(1, endPage - maxNumbers + 1);
+
+  if(startPage > 1) pagination.innerHTML += btn("1", "goPage(1)", 1===currentPage);
+  if(startPage > 2) pagination.innerHTML += `<span class="px-2 text-slate-400">…</span>`;
+
+  for(let i=startPage;i<=endPage;i++){
+    pagination.innerHTML += btn(String(i), `goPage(${i})`, i===currentPage);
+  }
+
+  if(endPage < totalPages-1) pagination.innerHTML += `<span class="px-2 text-slate-400">…</span>`;
+  if(endPage < totalPages) pagination.innerHTML += btn(String(totalPages), `goPage(${totalPages})`, totalPages===currentPage);
+
+  // Next
+  pagination.innerHTML += btn("»", "goPage(currentPage+1)", false, currentPage===totalPages);
+}
+
+function goPage(p){
+  currentPage = p;
+  render();
+}
+
+
+
+
+
+/* ================== CHAT ================== */
+function openChat(name, year, brand, model, cond, stock, price){
+  document.getElementById("chatOverlay").classList.add("open");
+  document.getElementById("chatBox").classList.add("open");
+
+  const msg = `Hola, me interesa: ${name} para ${year} ${brand} ${model}. ¿Stock y precio?`;
+  const wa = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+
+  document.getElementById("chatContent").innerHTML = `
+    <div class="bg-slate-50 border rounded-xl p-4">
+      <div class="text-xs text-slate-500 font-semibold mb-2">Detalle de producto</div>
+      <div class="text-lg font-extrabold text-slate-900">🔧 ${escapeHtml(name)}</div>
+      <div class="text-sm text-slate-700 mt-1">🚗 ${escapeHtml(year)} · ${escapeHtml(brand)} · ${escapeHtml(model)}</div>
+      <div class="grid grid-cols-2 gap-3 mt-4">
+        <div class="bg-white rounded-lg border p-3">
+          <div class="text-xs text-slate-500">Condición</div>
+          <div class="font-bold text-slate-900">${escapeHtml(cond || "—")}</div>
+        </div>
+        <div class="bg-white rounded-lg border p-3">
+          <div class="text-xs text-slate-500">Stock</div>
+          <div class="font-bold text-slate-900">${escapeHtml(stock || "0")}</div>
+        </div>
+      </div>
+      <div class="mt-4 bg-white rounded-lg border p-3">
+        <div class="text-xs text-slate-500">Precio</div>
+        <div class="text-2xl font-extrabold text-blue-700">$${Number(price||0).toLocaleString()}</div>
+      </div>
+      <div class="mt-4 text-sm text-slate-700">
+        ¿Deseas contactarnos por WhatsApp para cotizar esta pieza?
+      </div>
+    </div>
+  `;
+
+  document.getElementById("chatWhatsAppCta").href = wa;
+}
+
+function openChatDefault(){
+  document.getElementById("chatOverlay").classList.add("open");
+  document.getElementById("chatBox").classList.add("open");
+  document.getElementById("chatContent").innerHTML = `
+    <div class="bg-slate-50 border rounded-xl p-4">
+      <div class="font-extrabold text-slate-900 text-lg">👋 Hola</div>
+      <p class="text-slate-700 mt-2">Selecciona una pieza del inventario para ver el detalle y cotizar por WhatsApp.</p>
+    </div>`;
+  document.getElementById("chatWhatsAppCta").href = `https://wa.me/${WHATSAPP_NUMBER}`;
+}
+function closeChat(){
+  document.getElementById("chatOverlay").classList.remove("open");
+  document.getElementById("chatBox").classList.remove("open");
+}
+
+/* ================== HELPERS ================== */
+function escapeHtml(str){
+  return String(str ?? "").replace(/[&<>"']/g, m => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[m]));
+}
+function jsonSafe(v){ return JSON.stringify(String(v ?? "")); }
+
+/* ================== AUTO REFRESH (mantener) ================== */
+load();
+setInterval(async ()=>{
+  await load();
+  // Mantener estado (si el usuario estaba filtrando, re-aplicar)
+  applySidebarFilters();
+}, 60000);
+
+
+/* ================== CLICK EN CARD → CHAT (FIX DEFINITIVO) ================== */
+document.addEventListener("click", function (e) {
+  const card = e.target.closest(".card");
+  if (!card) return;
+
+  openChat(
+    card.dataset.name,
+    card.dataset.year,
+    card.dataset.brand,
+    card.dataset.model,
+    card.dataset.cond,
+    card.dataset.stock,
+    card.dataset.price
+  );
+});
+
+
+
+
+</script>
+
+</body>
+</html>
