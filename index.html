@@ -315,6 +315,12 @@
   </div>
 </section>
 
+
+
+
+
+
+
 <!-- ================================================= -->
 <!-- FOOTER (como imagen) -->
 <!-- ================================================= -->
@@ -441,7 +447,9 @@ async function load(){
     condition: p.condition || "Usado",
     stock_quantity: p.stock_quantity || "0",
     price: p.price || "0",
-    category: p.category || "General"
+    category: p.category || "General",
+    image_url: p.image_url || ""   // 👈 ESTA ES LA CLAVE
+
   }));
 
   // Mantiene inventario completo por defecto
@@ -693,16 +701,33 @@ function render(){
       ? "bg-green-100 text-green-700"
       : "bg-yellow-100 text-yellow-700";
 
-    return `
-      <article class="card bg-white rounded-2xl p-6 shadow cursor-pointer"
-  data-name="${escapeHtml(p.part_name)}"
-  data-year="${escapeHtml(p.year)}"
-  data-brand="${escapeHtml(p.brand)}"
-  data-model="${escapeHtml(p.model)}"
-  data-cond="${escapeHtml(p.condition)}"
-  data-stock="${escapeHtml(p.stock_quantity)}"
-  data-price="${escapeHtml(p.price)}">
 
+const imageSrc = p.image_url?.startsWith("http")
+  ? p.image_url
+  : `https://drive.google.com/uc?export=view&id=${p.image_url}`;
+
+const img = p.image_url
+  ? `<img src="${imageSrc}"
+         class="w-full h-44 object-contain bg-white rounded-xl border mb-4 cursor-zoom-in"
+         onclick="openImageZoom('${imageSrc}')">`
+  : `<div class="w-full h-44 flex items-center justify-center text-xs text-slate-400 border rounded-xl mb-4">
+       Sin imagen
+     </div>`;
+
+
+
+   return `
+  <article class="card bg-white rounded-2xl p-6 shadow cursor-pointer"
+    data-name="${escapeHtml(p.part_name)}"
+    data-year="${escapeHtml(p.year)}"
+    data-brand="${escapeHtml(p.brand)}"
+    data-model="${escapeHtml(p.model)}"
+    data-cond="${escapeHtml(p.condition)}"
+    data-stock="${escapeHtml(p.stock_quantity)}"
+    data-price="${escapeHtml(p.price)}"
+    data-image="${escapeHtml(p.image_url)}">
+
+ ${img}
         <div class="flex items-center justify-between gap-3">
           <span class="text-xs font-extrabold px-3 py-1 rounded-full ${condClass}">
             ${escapeHtml(p.condition)}
@@ -774,37 +799,45 @@ function goPage(p){
 
 
 /* ================== CHAT ================== */
-function openChat(name, year, brand, model, cond, stock, price){
+function openChat(name, year, brand, model, cond, stock, price, image){
   document.getElementById("chatOverlay").classList.add("open");
   document.getElementById("chatBox").classList.add("open");
 
   const msg = `Hola, me interesa: ${name} para ${year} ${brand} ${model}. ¿Stock y precio?`;
   const wa = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
 
-  document.getElementById("chatContent").innerHTML = `
-    <div class="bg-slate-50 border rounded-xl p-4">
-      <div class="text-xs text-slate-500 font-semibold mb-2">Detalle de producto</div>
-      <div class="text-lg font-extrabold text-slate-900">🔧 ${escapeHtml(name)}</div>
-      <div class="text-sm text-slate-700 mt-1">🚗 ${escapeHtml(year)} · ${escapeHtml(brand)} · ${escapeHtml(model)}</div>
-      <div class="grid grid-cols-2 gap-3 mt-4">
-        <div class="bg-white rounded-lg border p-3">
-          <div class="text-xs text-slate-500">Condición</div>
-          <div class="font-bold text-slate-900">${escapeHtml(cond || "—")}</div>
-        </div>
-        <div class="bg-white rounded-lg border p-3">
-          <div class="text-xs text-slate-500">Stock</div>
-          <div class="font-bold text-slate-900">${escapeHtml(stock || "0")}</div>
-        </div>
+const imgChat = image
+  ? `<img src="${image}" class="w-full h-48 object-contain rounded-xl border bg-white mb-3">`
+  : "";
+
+document.getElementById("chatContent").innerHTML = `
+  <div class="bg-slate-50 border rounded-xl p-4">
+    ${imgChat}
+
+    <div class="text-xs text-slate-500 font-semibold mb-2">Detalle de producto</div>
+    <div class="text-lg font-extrabold text-slate-900">🔧 ${escapeHtml(name)}</div>
+    <div class="text-sm text-slate-700 mt-1">
+      🚗 ${escapeHtml(year)} · ${escapeHtml(brand)} · ${escapeHtml(model)}
+    </div>
+
+    <div class="grid grid-cols-2 gap-3 mt-4">
+      <div class="bg-white rounded-lg border p-3">
+        <div class="text-xs text-slate-500">Condición</div>
+        <div class="font-bold">${escapeHtml(cond)}</div>
       </div>
-      <div class="mt-4 bg-white rounded-lg border p-3">
-        <div class="text-xs text-slate-500">Precio</div>
-        <div class="text-2xl font-extrabold text-blue-700">$${Number(price||0).toLocaleString()}</div>
-      </div>
-      <div class="mt-4 text-sm text-slate-700">
-        ¿Deseas contactarnos por WhatsApp para cotizar esta pieza?
+      <div class="bg-white rounded-lg border p-3">
+        <div class="text-xs text-slate-500">Stock</div>
+        <div class="font-bold">${escapeHtml(stock)}</div>
       </div>
     </div>
-  `;
+
+    <div class="mt-4 bg-white rounded-lg border p-3">
+      <div class="text-xs text-slate-500">Precio</div>
+      <div class="text-2xl font-extrabold text-blue-700">$${Number(price||0).toLocaleString()}</div>
+    </div>
+  </div>
+`;
+
 
   document.getElementById("chatWhatsAppCta").href = wa;
 }
@@ -841,7 +874,6 @@ setInterval(async ()=>{
 }, 60000);
 
 
-/* ================== CLICK EN CARD → CHAT (FIX DEFINITIVO) ================== */
 document.addEventListener("click", function (e) {
   const card = e.target.closest(".card");
   if (!card) return;
@@ -853,14 +885,69 @@ document.addEventListener("click", function (e) {
     card.dataset.model,
     card.dataset.cond,
     card.dataset.stock,
-    card.dataset.price
+    card.dataset.price,
+    card.dataset.image   // 👈 AQUÍ
   );
 });
 
 
+/* ================== IMAGE ZOOM ================== */
+let zoomed = false;
+
+function openImageZoom(src){
+  const overlay = document.getElementById("imageZoomOverlay");
+  const img = document.getElementById("imageZoom");
+
+  img.src = src;
+  img.style.transform = "scale(1)";
+  img.style.cursor = "zoom-in";
+  zoomed = false;
+
+  overlay.classList.remove("hidden");
+  overlay.classList.add("flex");
+}
+
+function closeImageZoom(){
+  const overlay = document.getElementById("imageZoomOverlay");
+  overlay.classList.add("hidden");
+  overlay.classList.remove("flex");
+}
+
+function toggleZoom(e){
+  const img = e.target;
+
+  if(!zoomed){
+    img.style.transform = "scale(2)";
+    img.style.cursor = "zoom-out";
+    zoomed = true;
+  } else {
+    img.style.transform = "scale(1)";
+    img.style.cursor = "zoom-in";
+    zoomed = false;
+  }
+}
 
 
 </script>
+
+<!-- ================== IMAGE ZOOM MODAL ================== -->
+<div id="imageZoomOverlay"
+     class="fixed inset-0 bg-black/80 hidden items-center justify-center z-[999]"
+     onclick="closeImageZoom()">
+
+  <div class="relative max-w-5xl w-full p-4">
+    <button onclick="closeImageZoom()"
+      class="absolute -top-10 right-0 text-white text-3xl font-bold">
+      ✕
+    </button>
+
+    <img id="imageZoom"
+         src=""
+         class="mx-auto max-h-[85vh] w-auto rounded-xl shadow-2xl cursor-zoom-in"
+         onclick="toggleZoom(event)">
+  </div>
+</div>
+
 
 </body>
 </html>
